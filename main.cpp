@@ -1,4 +1,3 @@
-
 //#include <gl/gl.h>     // The GL Header File
 //#include <windows.h>	//Solo para Windows
 //#include <GL/glut.h>   // The GL Utility Toolkit (Glut) Header
@@ -10,6 +9,7 @@
 #include "texture.h"
 #include "figuras.h"
 #include "Camera.h"
+#include "cmodel/CModel.h"
 
 float angulo1 = 0.0;
 float angulo2 = 0.0;
@@ -18,6 +18,70 @@ float giro = 0.0;
 float offset2 = 0;
 float offset = 0;
 bool g_fanimacion = false;
+//NEW// Keyframes
+float posX = 0, posY = 2.5, posZ = -3.5, rotRodIzq = 0;
+float giroMonito = 0;
+float movBrazoDer = 0.0;
+float movBrazoIzq = 0.0;
+float rotRodDer = 0.0;
+float movBrazoDerF = 0.0;
+//animación sol
+float movX = 0.0;
+float movY = 0.0;
+float Vo = 60.0;
+float angulo =20 * 3.1416 / 180;
+float t = 0.0;
+bool mov_esfera = false;
+
+
+DWORD dwFrames = 0;
+DWORD dwCurrentTime = 0;
+DWORD dwLastUpdateTime = 0;
+DWORD dwElapsedTime = 0;
+
+
+#define MAX_FRAMES 30
+typedef struct _frame
+{
+	//Variables para GUARDAR Key Frames
+	float posX;		//Variable para PosicionX
+	float posY;		//Variable para PosicionY
+	float posZ;		//Variable para PosicionZ
+	float incX;		//Variable para IncrementoX
+	float incY;		//Variable para IncrementoY
+	float incZ;		//Variable para IncrementoZ
+	float rotRodIzq;
+	float rotInc;
+	float giroMonito;
+
+	
+
+	float giroMonitoInc;
+	float movBrazoDer;
+	float movBrazoDerInc;
+	float movBrazoIzq;
+	float movBrazoIzqInc;
+	float rotRodDer;
+	float rotRodDerInc;
+	float movBrazoDerF;
+	float movBrazoDerFInc;
+
+}FRAME;
+
+FRAME KeyFrame[MAX_FRAMES];
+
+int FrameIndex = 10;			//introducir datos
+bool play = false;
+
+int playIndex = 0;
+
+
+
+//NEW//////////////////NEW//////////////////NEW//////////////////NEW////////////////
+
+int w = 500, h = 500;
+int frame = 0, time, timebase = 0;
+char s[30];
 //NEW//////////////////NEW//////////////////NEW//////////////////NEW////////////////
 CCamera objCamera; 
 
@@ -61,6 +125,10 @@ CTexture mojito;
 CTexture ventanarec;
 CTexture forraje;
 CTexture pasto;
+
+int year = 0, day = 0;
+int year_m = 0, day_m = 0;
+int rotMoon = 0;
 CTexture ventanah;
 CTexture ventanaderecho;
 CTexture pista;
@@ -130,6 +198,11 @@ CFiguras fig2;
 CFiguras fig3;
 
 
+GLfloat MoonDiffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f };			// Luna
+GLfloat MoonSpecular[] = { 1.0, 1.0, 1.0, 1.0 };
+GLfloat MoonShininess[] = { 50.0 };
+CFiguras fig7;
+
 
 
 void InitGL ( GLvoid )     // Inicializamos parametros
@@ -169,7 +242,7 @@ void InitGL ( GLvoid )     // Inicializamos parametros
 	pista.BuildGLTexture();
 	pista.ReleaseImage();
 
-	mojito.LoadTGA("Texturas/021.tga");
+	mojito.LoadTGA("Texturas/nombres.tga");
 	mojito.BuildGLTexture();
 	mojito.ReleaseImage();
 
@@ -419,6 +492,26 @@ void InitGL ( GLvoid )     // Inicializamos parametros
 	ventanaderecho.BuildGLTexture();
 	ventanaderecho.ReleaseImage();
 
+	//NEW Iniciar variables de KeyFrames
+	for (int i = 0; i<MAX_FRAMES; i++)
+	{
+		KeyFrame[i].posX = 0;
+		KeyFrame[i].posY = 0;
+		KeyFrame[i].posZ = 0;
+		KeyFrame[i].incX = 0;
+		KeyFrame[i].incY = 0;
+		KeyFrame[i].incZ = 0;
+		KeyFrame[i].rotRodIzq = 0;
+		KeyFrame[i].rotInc = 0;
+		KeyFrame[i].giroMonito = 0;
+		KeyFrame[i].giroMonitoInc = 0;
+		KeyFrame[i].rotRodDer = 0;
+		KeyFrame[i].rotRodDerInc = 0;
+		KeyFrame[i].movBrazoDer = 0;
+		KeyFrame[i].movBrazoDerInc = 0;
+		KeyFrame[i].movBrazoIzq = 0;
+		KeyFrame[i].movBrazoIzqInc = 0;
+	}
 
 
 	objCamera.Position_Camera(0,2.5f,7, 0,2.5f,0, 0, 1, 0);
@@ -436,6 +529,112 @@ void pintaTexto(float x, float y, float z, void *font,char *string)
     glutBitmapCharacter(font, *c); //imprime
   }
 }
+
+
+
+
+
+
+
+void monito()
+{
+	//glNewList(1, GL_COMPILE);
+	glPushMatrix();//Pecho
+	glScalef(0.5, 0.5, 0.5);
+	fig7.prisma(2.0, 2.0, 1, 0);
+
+	glPushMatrix();//Cuello
+	glTranslatef(0, 1.0, 0.0);
+	fig7.cilindro(0.25, 0.25, 15, 0);
+	glPushMatrix();//Cabeza
+	glTranslatef(0, 1.0, 0);
+	fig7.esfera(0.75, 15, 15, 0);
+	glPopMatrix();
+	glPopMatrix();
+
+	glPushMatrix(); //Brazo derecho-->
+	glTranslatef(1.25, 0.65, 0);
+	fig7.esfera(0.5, 12, 12, 0);
+	glPushMatrix();
+	glTranslatef(0.25, 0, 0);
+	glRotatef(movBrazoDer, 0.0, 0.0, 1.0);
+	glRotatef(-45, 0, 1, 0);
+	glTranslatef(0.75, 0, 0);
+	fig7.prisma(0.7, 1.5, 0.7, 0);
+	glPopMatrix();
+	glPopMatrix();
+
+	glPushMatrix(); //Brazo izquierdo <--
+	glTranslatef(-1.25, 0.65, 0);
+	fig7.esfera(0.5, 12, 12, 0);
+	glPushMatrix();
+	glTranslatef(-0.25, 0, 0);
+	glRotatef(movBrazoIzq, 0.0, 0.0, 1.0);
+	glRotatef(45, 0, 1, 0);
+	glRotatef(25, 0, 0, 1);
+	glRotatef(25, 1, 0, 0);
+	glTranslatef(-0.75, 0, 0);
+	fig7.prisma(0.7, 1.5, 0.7, 0);
+	glPopMatrix();
+	glPopMatrix();
+
+	glPushMatrix();//Cintura
+	glColor3f(0, 0, 1);
+	glTranslatef(0, -1.5, 0);
+	fig7.prisma(1, 2, 1, 0);
+
+	glPushMatrix(); //Pie Derecho -->
+	glTranslatef(0.75, -0.5, 0);
+	glRotatef(-15, 1, 0, 0);
+	glTranslatef(0, -0.5, 0);
+	fig7.prisma(1.0, 0.5, 1, 0);
+
+	glPushMatrix();
+	glTranslatef(0, -0.5, 0);
+	glRotatef(15 + rotRodDer, 1, 0, 0);
+	glRotatef(15, 1, 0, 0);
+	glTranslatef(0, -0.75, 0);
+	fig7.prisma(1.5, 0.5, 1, 0);
+
+	glPushMatrix();
+	glTranslatef(0, -0.75, 0.3);
+	fig7.prisma(0.2, 1.2, 1.5, 0);
+	glPopMatrix();
+	glPopMatrix();
+	glPopMatrix();
+
+
+	glPushMatrix(); //Pie Izquierdo -->
+	glTranslatef(-0.75, -0.5, 0);
+	glRotatef(-5, 1, 0, 0);
+	glTranslatef(0, -0.5, 0);
+	fig7.prisma(1.0, 0.5, 1, 0);
+
+	glPushMatrix();
+	glTranslatef(0, -0.5, 0);
+	glRotatef(15 + rotRodIzq, 1, 0, 0);
+	glTranslatef(0, -0.75, 0);
+	fig7.prisma(1.5, 0.5, 1, 0);
+
+	glPushMatrix();
+	glTranslatef(0, -0.75, 0.3);
+	fig7.prisma(0.2, 1.2, 1.5, 0);
+	glPopMatrix();
+	glPopMatrix();
+	glPopMatrix();
+
+
+	glPopMatrix();
+
+
+	glColor3f(1, 1, 1);
+	glPopMatrix();
+	//glEndList();
+}
+
+
+
+
 
 
 
@@ -1764,6 +1963,38 @@ void display(void)   // Creamos la funcion donde se dibuja
 
 	glEnable(GL_LIGHTING);
 	glPopMatrix();
+	
+//moon
+	glPushMatrix();
+	glTranslatef(0.0, 40, 0.0);
+	glPushMatrix();
+	glRotatef(90, 0, 0, 1);
+	glRotatef(rotMoon, 1, 0, 0);
+	glTranslatef(0.0, 40, 0.0);
+	glColor3f(0.8, 0.8, 0.8);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, MoonDiffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, MoonSpecular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, MoonShininess);
+
+
+	glutWireSphere(1, 14, 14);//moon
+
+	glPopMatrix();
+	glPopMatrix();
+
+	glPushMatrix();//sol
+	glTranslatef(80, -2, -45);
+		glPushMatrix();
+	
+		glColor3f(1, 1, 0);
+		glDisable(GL_LIGHTING);
+		glTranslatef(movX, movY, 0);
+		fig1.esfera(4.0, 15.0, 15.0, 0);
+
+		glEnable(GL_LIGHTING);
+		glPopMatrix();
+		glPopMatrix();
+
 	//agua
 	glPushMatrix();
 
@@ -1786,7 +2017,13 @@ void display(void)   // Creamos la funcion donde se dibuja
 	glPopMatrix();
 
 
-
+	//mono
+	glPushMatrix();
+	glTranslatef(posX, posY, posZ);
+	glRotatef(giroMonito, 0, 1, 0);
+	monito();
+	glDisable(GL_COLOR_MATERIAL);
+	glPopMatrix();
 	//medusa
 	glPushMatrix();
 	glTranslatef(25,10,20);
@@ -1818,7 +2055,7 @@ void display(void)   // Creamos la funcion donde se dibuja
 
 	glTranslatef(0, 0, 0);
 	glScalef(0.5, 0, .3);
-	glRotatef(90, 1, 1, 0);
+	glRotatef(-90, 1, 1, 0);
 	glBindTexture(GL_TEXTURE_2D, mojito.GLindex);
 	glBegin(GL_QUADS);
 	glColor3f(1.0, 1.0, 1.0);
@@ -1846,7 +2083,6 @@ void display(void)   // Creamos la funcion donde se dibuja
 	ingenieria();
 	glPopMatrix();
 
-	glColor3f(1,1,1);
 	glPushMatrix(); //arquitectura 
 	glTranslatef(-55,0,30);
 	glScalef(.2,.2,.2);
@@ -1932,7 +2168,42 @@ void display(void)   // Creamos la funcion donde se dibuja
 }
 
 void animacion()
+
+
 {
+
+	dwCurrentTime = GetTickCount(); 
+	dwElapsedTime = dwCurrentTime - dwLastUpdateTime;
+
+	if (dwElapsedTime >= 30)
+	{
+		year = ((year + 3) % 360);
+	
+		day = (day + 5) % 360;
+		day_m = (day_m + 1) % 360;
+		year_m = (year_m + 2) % 360;
+		rotMoon = (rotMoon -1) % 360;
+		
+
+		dwLastUpdateTime = dwCurrentTime;
+	}
+
+
+//movimiento del sol
+	if (mov_esfera)
+	{
+	movX = -Vo * t * cos(angulo);
+	movY = (Vo*t*sin(angulo))-(0.5*9.817*t*t);
+	t  += 0.003;
+	if (movX <= -200.0){
+		movY = 0.0;
+		movX = 0.0;
+		t = 0.0;
+	}
+
+	}
+
+	//movimiento de imagenes
 	offset += 0.001;
 	offset2 += 0.001;
 	fig2.text_izq-= 0.001;
@@ -1942,7 +2213,80 @@ void animacion()
 	if(fig2.text_der<0)
 		fig2.text_der=1;
 	giro-= 0.4;
+	if (play) //reprodece animacion con la tecla L
+	{
+		//dterminar cuando termina la animacion 
+		if ((abs(KeyFrame[playIndex + 1].posX - posX))<0.1 &&
+			(abs(KeyFrame[playIndex + 1].posY - posY))<0.1 &&
+			(abs(KeyFrame[playIndex + 1].posZ - posZ))<0.1
+			&&
+			(abs(KeyFrame[playIndex + 1].rotRodIzq - rotRodIzq))<0.1 &&
+			(abs(KeyFrame[playIndex + 1].giroMonito - giroMonito))<0.1 &&
+			(abs(KeyFrame[playIndex + 1].movBrazoDer - movBrazoDer))<0.1 &&
+			(abs(KeyFrame[playIndex + 1].movBrazoIzq - movBrazoIzq))<0.1 &&
+			(abs(KeyFrame[playIndex + 1].rotRodDer - rotRodDer))<0.1
+			)
+		{
+			playIndex++;
+			if (playIndex>FrameIndex - 2)
+			{
+				printf("termina anim\n");
+				playIndex = 0;
+				play = false;
+			}
+		}
+		else //Calculo de la interpolacion
+		{
+			KeyFrame[playIndex].incX = (KeyFrame[playIndex + 1].posX - KeyFrame[playIndex].posX) / 100;		//100 frames
+			posX += KeyFrame[playIndex].incX;
+
+			KeyFrame[playIndex].incY = (KeyFrame[playIndex + 1].posY - KeyFrame[playIndex].posY) / 100;		//100 frames
+			posY += KeyFrame[playIndex].incY;
+
+			KeyFrame[playIndex].incZ = (KeyFrame[playIndex + 1].posZ - KeyFrame[playIndex].posZ) / 100;		//100 frames
+			posZ += KeyFrame[playIndex].incZ;
+
+			KeyFrame[playIndex].movBrazoDerInc = (KeyFrame[playIndex + 1].movBrazoDer - KeyFrame[playIndex].movBrazoDer) / 100;
+			movBrazoDer += KeyFrame[playIndex].movBrazoDerInc;
+
+			KeyFrame[playIndex].movBrazoIzqInc = (KeyFrame[playIndex + 1].movBrazoIzq - KeyFrame[playIndex].movBrazoIzq) / 100;
+			movBrazoIzq += KeyFrame[playIndex].movBrazoIzqInc;
+
+			KeyFrame[playIndex].rotRodDerInc = (KeyFrame[playIndex + 1].rotRodDer - KeyFrame[playIndex].rotRodDer) / 100;
+			rotRodDer += KeyFrame[playIndex].rotRodDerInc;
+
+			KeyFrame[playIndex].rotInc = (KeyFrame[playIndex + 1].rotRodIzq - KeyFrame[playIndex].rotRodIzq) / 100;		//100 frames
+			rotRodIzq += KeyFrame[playIndex].rotInc;
+
+			KeyFrame[playIndex].giroMonitoInc = (KeyFrame[playIndex + 1].giroMonito - KeyFrame[playIndex].giroMonito) / 100;		//100 frames
+			giroMonito += KeyFrame[playIndex].giroMonitoInc;
+
+		}
+
+	}
+
+	frame++;
+	time = glutGet(GLUT_ELAPSED_TIME);
+	if (time - timebase > 1000) {
+		sprintf(s, "FPS:%4.2f", frame*1000.0 / (time - timebase));
+		timebase = time;
+		frame = 0;
+	}
+
 	glutPostRedisplay();
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 void reshape ( int width , int height )   // Creamos funcion Reshape
@@ -1968,6 +2312,137 @@ void reshape ( int width , int height )   // Creamos funcion Reshape
 void keyboard ( unsigned char key, int x, int y )  // Create Keyboard Function
 {
 	switch ( key ) {
+
+
+
+	case'Z':
+	case'z':
+		mov_esfera = !mov_esfera;
+		break;
+	
+
+	case 'l':
+	case 'L':
+		KeyFrame[0].posX = 0.0;
+		KeyFrame[0].posY = 2.5;
+		KeyFrame[0].posZ = -3.5;
+		KeyFrame[0].rotRodIzq = 0.0;
+		KeyFrame[0].rotRodDer = 0.0;
+		KeyFrame[0].giroMonito = 0.0;
+		KeyFrame[0].movBrazoDer = 0.0;
+		KeyFrame[0].movBrazoIzq = 0.0;
+
+		KeyFrame[1].posX = 0.0;
+		KeyFrame[1].posY = 2.5;
+		KeyFrame[1].posZ = -3.5;
+		KeyFrame[1].rotRodIzq = 0.0;
+		KeyFrame[1].rotRodDer = 0.0;
+		KeyFrame[1].giroMonito = 0.0;
+		KeyFrame[1].movBrazoDer = -70.0;
+		KeyFrame[1].movBrazoIzq = 0.0;
+
+		KeyFrame[2].posX = 0.0;
+		KeyFrame[2].posY = 2.5;
+		KeyFrame[2].posZ = -3.5;
+		KeyFrame[2].rotRodIzq = 0.0;
+		KeyFrame[2].rotRodDer = 0.0;
+		KeyFrame[2].giroMonito = 0.0;
+		KeyFrame[2].movBrazoDer = -70.0;
+		KeyFrame[2].movBrazoIzq = 70.0;
+
+		KeyFrame[3].posX = 0.0;
+		KeyFrame[3].posY = 2.5;
+		KeyFrame[3].posZ = -3.5;
+		KeyFrame[3].rotRodIzq = 0.0;
+		KeyFrame[3].rotRodDer = 0.0;
+		KeyFrame[3].giroMonito = 0.0;
+		KeyFrame[3].movBrazoDer = 200.0;
+		KeyFrame[3].movBrazoIzq = -200.0;
+
+		KeyFrame[4].posX = 0.0;
+		KeyFrame[4].posY = 2.5;
+		KeyFrame[4].posZ = -3.5;
+		KeyFrame[4].rotRodIzq = 0.0;
+		KeyFrame[4].rotRodDer = 0.0;
+		KeyFrame[4].giroMonito = 0.0;
+		KeyFrame[4].movBrazoDer = 90.0;
+		KeyFrame[4].movBrazoIzq = -200.0;
+
+		KeyFrame[5].posX = 0.0;
+		KeyFrame[5].posY = 2.5;
+		KeyFrame[5].posZ = -3.5;
+		KeyFrame[5].rotRodIzq = 0.0;
+		KeyFrame[5].rotRodDer = 0.0;
+		KeyFrame[5].giroMonito = 0.0;
+		KeyFrame[5].movBrazoDer = 120.0;
+		KeyFrame[5].movBrazoIzq = -140;
+
+		KeyFrame[6].posX = 0.0;
+		KeyFrame[6].posY = 2.5;
+		KeyFrame[6].posZ = -3.5;
+		KeyFrame[6].rotRodIzq = 0.0;
+		KeyFrame[6].rotRodDer = 0.0;
+		KeyFrame[6].giroMonito = 0.0;
+		KeyFrame[6].movBrazoDer = 120;
+		KeyFrame[6].movBrazoIzq = -140;
+
+		KeyFrame[7].posX = 0.0;
+		KeyFrame[7].posY = 5.0;
+		KeyFrame[7].posZ = -3.5;
+		KeyFrame[7].rotRodIzq = 0.0;
+		KeyFrame[7].rotRodDer = 0.0;
+		KeyFrame[7].giroMonito = 0.0;
+		KeyFrame[7].movBrazoDer = 120;
+		KeyFrame[7].movBrazoIzq = -140;
+
+		KeyFrame[8].posX = 0.0;
+		KeyFrame[8].posY = 2.5;
+		KeyFrame[8].posZ = -3.5;
+		KeyFrame[8].rotRodIzq = 0.0;
+		KeyFrame[8].rotRodDer = 0.0;
+		KeyFrame[8].giroMonito = 0.0;
+		KeyFrame[8].movBrazoDer = 0.0;
+		KeyFrame[8].movBrazoIzq = 0.0;
+		
+		KeyFrame[9].posX = 0.0;
+		 KeyFrame[9].posY = 1.0;
+		KeyFrame[9].posZ = -3.5;
+		KeyFrame[9].rotRodIzq =0.0;
+		KeyFrame[9].rotRodDer = 0.0;
+		KeyFrame[9].giroMonito = 0.0;
+		KeyFrame[9].movBrazoDer = 0.0;
+		KeyFrame[9].movBrazoIzq = 0.0;
+
+	
+
+
+
+		if (play == false && (FrameIndex>1))
+		{
+
+			posX = KeyFrame[0].posX;
+			posY = KeyFrame[0].posY;
+			posZ = KeyFrame[0].posZ;
+
+			rotRodIzq = KeyFrame[0].rotRodIzq;
+			giroMonito = KeyFrame[0].giroMonito;
+			movBrazoDer = KeyFrame[0].movBrazoDer;
+			movBrazoIzq = KeyFrame[0].movBrazoIzq;
+			rotRodDer = KeyFrame[0].rotRodDer;
+			play = true;
+			playIndex = 0;
+		}
+		else
+		{
+			play = false;
+		}
+		break;
+
+
+
+
+
+
 		case 'w':   //Movimientos de camara
 		case 'W':
 			objCamera.Move_Camera( CAMERASPEED+0.2 );
@@ -2006,32 +2481,93 @@ void keyboard ( unsigned char key, int x, int y )  // Create Keyboard Function
 			break;
 
 		case 'r':		//
-			angulo1 += 2.5;
-			break;
-
 		case 'R':		//
-			angulo1 -= 2.5;
 
-			break;
+			KeyFrame[0].posX = 60;
+			KeyFrame[0].posY = -2.5;
+			KeyFrame[0].posZ = -25;
+			KeyFrame[0].rotRodIzq = 0.0;
+			KeyFrame[0].rotRodDer = 0.0;
+			KeyFrame[0].giroMonito = 0.0;
+			KeyFrame[0].movBrazoDer = 0.0;
+			KeyFrame[0].movBrazoIzq = 0.0;
 
-		case 'g':		//
-			angulo3 += 2.5;
-			break;
 
-		case 'G':		//
-			angulo3 -= 2.5;
+			KeyFrame[1].posX = 60.0;
+			KeyFrame[1].posY = -2.5;
+			KeyFrame[1].posZ = 10;
+			KeyFrame[1].rotRodIzq = 0.0;
+			KeyFrame[1].rotRodDer = 0.0;
+			KeyFrame[1].giroMonito = 0.0;
+			KeyFrame[1].movBrazoDer = 90.0;
+			KeyFrame[1].movBrazoIzq = -270.0;
 
-			break;
-		case 'f':		//
-			angulo2 += 2.5;
-			break;
-		case 'F':
-			angulo2 -= 2.5;
-
-			
-			break;
+			KeyFrame[2].posX = -10.0;
+			KeyFrame[2].posY = -2.5;
+			KeyFrame[2].posZ = 10;
+			KeyFrame[2].rotRodIzq = 0.0;
+			KeyFrame[2].rotRodDer = 0.0;
+			KeyFrame[2].giroMonito = 0.0;
+			KeyFrame[2].movBrazoDer = 90.0;
+			KeyFrame[2].movBrazoIzq = -270.0;
 
 		
+
+			KeyFrame[3].posX = -10;
+			KeyFrame[3].posY = -2.5;
+			KeyFrame[3].posZ = -15;
+			KeyFrame[3].rotRodIzq = 0.0;
+			KeyFrame[3].rotRodDer = 0.0;
+			KeyFrame[3].giroMonito = 0.0;
+			KeyFrame[3].movBrazoDer = 0.0;
+			KeyFrame[3].movBrazoIzq = 0.0;
+
+
+
+
+
+
+			if (play == false && (FrameIndex>1))
+			{
+
+				posX = KeyFrame[0].posX;
+				posY = KeyFrame[0].posY;
+				posZ = KeyFrame[0].posZ;
+
+				rotRodIzq = KeyFrame[0].rotRodIzq;
+				giroMonito = KeyFrame[0].giroMonito;
+				movBrazoDer = KeyFrame[0].movBrazoDer;
+				movBrazoIzq = KeyFrame[0].movBrazoIzq;
+				rotRodDer = KeyFrame[0].rotRodDer;
+				play = true;
+				playIndex = 0;
+			}
+			else
+			{
+				play = false;
+			}
+
+	
+		break;
+
+		//case 'g':		//
+		//	angulo3 += 2.5;
+		//	break;
+
+		//case 'G':		//
+		//	angulo3 -= 2.5;
+
+		//	break;
+		//case 'f':		//
+		//	angulo2 += 2.5;
+		//	break;
+		//case 'F':
+		//	angulo2 -= 2.5;
+
+		//	
+		//	break;
+
+		//
 
 
 
