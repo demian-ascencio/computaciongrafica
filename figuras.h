@@ -29,6 +29,7 @@ class CFiguras
 	void skybox(float altura, float largo, float profundidad, GLuint text);	//Funcion creacion cielo
 	void skybox2 (float altura, float largo, float profundidad, GLuint text);
 	void renderSphere( float cx, float cy, float cz, float r, int p, GLuint text );
+	void nieve_lluvia(GLuint text, float velocidad,float x, float y, float z, int cant, float cadencia);
 	
 
 	//void torus(GLfloat radioM, GLfloat radiom, int meridianos, int paralelos, GLuint text );

@@ -9,7 +9,7 @@
 #include "texture.h"
 #include "figuras.h"
 #include "Camera.h"
-#include "cmodel/CModel.h"
+//#include "cmodel/CModel.h"
 
 float angulo1 = 0.0;
 float angulo2 = 0.0;
@@ -125,6 +125,10 @@ CTexture mojito;
 CTexture ventanarec;
 CTexture forraje;
 CTexture pasto;
+CTexture nieve;
+CTexture lluvia;
+CTexture snow;
+CTexture meteoro;
 
 int year = 0, day = 0;
 int year_m = 0, day_m = 0;
@@ -491,6 +495,22 @@ void InitGL ( GLvoid )     // Inicializamos parametros
 	ventanaderecho.LoadTGA("Texturas/ventanaderecho.tga");
 	ventanaderecho.BuildGLTexture();
 	ventanaderecho.ReleaseImage();
+
+	nieve.LoadTGA("Texturas/nieve.tga");
+	nieve.BuildGLTexture();
+	nieve.ReleaseImage();
+
+	snow.LoadTGA("Texturas/snow.tga");
+	snow.BuildGLTexture();
+	snow.ReleaseImage();
+
+	lluvia.LoadTGA("Texturas/lluvia.tga");
+	lluvia.BuildGLTexture();
+	lluvia.ReleaseImage();
+
+	meteoro.LoadTGA("Texturas/meteor.tga");
+	meteoro.BuildGLTexture();
+	meteoro.ReleaseImage();
 
 	//NEW Iniciar variables de KeyFrames
 	for (int i = 0; i<MAX_FRAMES; i++)
@@ -2089,7 +2109,7 @@ void display(void)   // Creamos la funcion donde se dibuja
 	arquitectura();
 	glPopMatrix();
 
-
+	
 
 	glPushMatrix(); //rectoria 
 	rectoria();
@@ -2109,7 +2129,14 @@ void display(void)   // Creamos la funcion donde se dibuja
 	torreh();	
 	glPopMatrix();
 
-
+	///////////////////////////////////////////////////
+	//////////Nieve o lluvia segun textura/////////////
+	///////////////////////////////////////////////////
+	//Parámetros: (textura-nieve ó snow ó lluvia, velocidad de caida, x, y, z, cantidad de planos, raiz de cantidad de texturas por plano)
+	glPushMatrix();
+		glTranslatef(-100.0,0.0,-57.5);
+		fig1.nieve_lluvia(lluvia.GLindex, 0.03, 200, 130, 115, 21, 20);
+	glPopMatrix();
 
 	glPushMatrix(); //cargamos derecho 
 	glTranslatef(-5.5, 5, -40);

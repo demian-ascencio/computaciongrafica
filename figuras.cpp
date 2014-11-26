@@ -524,11 +524,60 @@ void CFiguras::prisma (float altura, float largo, float profundidad, GLuint text
 		glEnd();
 }
 
+void CFiguras::nieve_lluvia(GLuint text, float velocidad, float x, float y, float z, int cant, float cadencia){
+
+	static float offset=0;
+	float incz = z / cant, incx= x / cant;
+	int i;
+	glEnable(GL_BLEND);
+	glBindTexture(GL_TEXTURE_2D, text);   // choose the texture to use.
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+	for (i = 0; i < cant; i++){
+
+	glBegin(GL_POLYGON);	//Back
+
+	glNormal3f(0.0f, 0.0f, -1.0f);
+		glTexCoord2f(0.0f - offset, 0.0f); glVertex3f(0.0, x, i*incz -0.1);
+		glTexCoord2f(0.0f - offset, cadencia); glVertex3f(x, 0.0, i*incz - 0.1);
+		glTexCoord2f(cadencia - offset, cadencia); glVertex3f(x, y, i*incz - 0.1);
+		glTexCoord2f(cadencia - offset, 0.0f); glVertex3f(0.0, y, i*incz - 0.1);
+	glEnd();
+	
+	glBegin(GL_POLYGON);	//Front
+
+	glNormal3f(0.0f, 0.0f, 1.0f);
+	glTexCoord2f(0.0f, 0.0f - offset); glVertex3f(0.0, 0.0, i*incz);
+	glTexCoord2f(0.0f, cadencia - offset); glVertex3f(0.0, y, i*incz);
+	glTexCoord2f(cadencia, cadencia - offset); glVertex3f(x, y, i*incz);
+	glTexCoord2f(cadencia, 0.0f - offset); glVertex3f(x, 0.0, i*incz);
+	glEnd();
+
+	glBegin(GL_POLYGON);	//Right
+
+	glNormal3f(1.0f, 0.0f, 0.0f);
+	glTexCoord2f(0.0f, 0.0f - offset); glVertex3f(i*incx, 0.0, 0.0);
+	glTexCoord2f(0.0f, cadencia - offset); glVertex3f(i*incx, y, 0.0);
+	glTexCoord2f(cadencia, cadencia - offset); glVertex3f(i*incx, y, z);
+	glTexCoord2f(cadencia, 0.0f - offset); glVertex3f(i*incx, 0.0, z);
+	glEnd();
+
+	glBegin(GL_POLYGON);	//Left
+
+	glNormal3f(-1.0f, 0.0f, 0.0f);
+	glTexCoord2f(0.0f, cadencia + offset); glVertex3f(i*incx - 0.1, 0.0, 0.0);
+	glTexCoord2f(0.0f, 0.0f + offset); glVertex3f(i*incx - 0.1, y, 0.0);
+	glTexCoord2f(cadencia, 0.0f + offset); glVertex3f(i*incx - 0.1, y, z);
+	glTexCoord2f(cadencia, cadencia + offset); glVertex3f(i*incx - 0.1, 0.0, z);
+	glEnd();
+
+	};
+	offset -= velocidad;
+	glDisable(GL_BLEND);
+}
 
 void CFiguras::prisma(float altura, float largo, float profundidad, GLuint text, GLuint XREP, GLuint YREP)  //Funcion creacion prisma
 {
-
-	GLfloat vertice[8][3] = {
+	static float offset;GLfloat vertice[8][3] = {
 			{ 0.5*largo, -0.5*altura, 0.5*profundidad },    //Coordenadas Vértice 1 V1
 			{ -0.5*largo, -0.5*altura, 0.5*profundidad },    //Coordenadas Vértice 2 V2
 			{ -0.5*largo, -0.5*altura, -0.5*profundidad },    //Coordenadas Vértice 3 V3
