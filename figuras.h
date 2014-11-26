@@ -3,7 +3,7 @@
 //#include <stdio.h>
 
 //#include <math.h>
-#include "Main.h"
+#include "include/Main.h"
 
 
 class CFiguras

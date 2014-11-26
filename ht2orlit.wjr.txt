@@ -1,0 +1,30 @@
+﻿
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Your branch is up-to-date with 'origin/master'.
+#
+# Changes to be committed:
+#	new file:   Camera.cpp
+#	new file:   Camera.h
+#	new file:   Texturas.rar
+#	new file:   Texturas/arquiEdificioLArriba.tga
+#	new file:   Texturas/arquiEdificioLAtras.tga
+#	new file:   Texturas/arquiEdificioLFrente.tga
+#	new file:   Texturas/arquiMucaArriba.tga
+#	new file:   Texturas/arquiMucaFrente.tga
+#	new file:   Texturas/arquiPrincipalArriba.tga
+#	new file:   Texturas/arquiPrincipalLados.tga
+#	new file:   glut32.dll
+#	new file:   include/GL/glut.h
+#	new file:   include/Main.h
+#	new file:   lib/glut32.lib
+#	renamed:    main -> main.cpp
+#	renamed:    main2 -> main2.cpp
+#	new file:   texture.cpp
+#	new file:   texture.h
+#
+# Untracked files:
+#	MainFiguras.cpp
+#
+
